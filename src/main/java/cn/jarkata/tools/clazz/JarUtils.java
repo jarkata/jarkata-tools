@@ -16,6 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
+/**
+ * Jar包工具类
+ *
+ * @author jarkata
+ */
 public class JarUtils {
 
     private static final Object lock = new Object();
@@ -66,11 +71,6 @@ public class JarUtils {
         }
         return classList;
     }
-
-
-
-
-
 
 
     /**
