@@ -8,5 +8,7 @@
 - 读取指定索引的sheet数据
 - 读取指定sheet名的数据
 - 读取多个相同格式的文件数据至一个集合中
+- 单Sheet写入数据至Excel文件
+- 多Sheet数据写入至Excel文件
 
 ## 2.读取Jar文件中的class
