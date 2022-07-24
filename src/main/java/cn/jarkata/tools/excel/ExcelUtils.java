@@ -2,8 +2,6 @@ package cn.jarkata.tools.excel;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -16,37 +14,62 @@ import java.util.*;
 
 public class ExcelUtils {
 
-    public static void writeTo(File outFile, ExcelData excelData) throws IOException, InvalidFormatException {
+    public static void writeTo(File outFile, List<ExcelData> excelDataList) {
+        Objects.requireNonNull(outFile, "Output File is Null");
+        Objects.requireNonNull(excelDataList, "Data Is Null");
+        try (
+                Workbook workbook = new XSSFWorkbook();
+                FileOutputStream fileOutputStream = new FileOutputStream(outFile)
+        ) {
+            for (ExcelData excelData : excelDataList) {
+                writeSheet(workbook, excelData);
+            }
+            workbook.write(fileOutputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public static void writeTo(File outFile, ExcelData excelData) throws IOException {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelData, "Data Is Null");
         try (
-                XSSFWorkbook workbook = new XSSFWorkbook();
+                Workbook workbook = new XSSFWorkbook();
                 FileOutputStream fileOutputStream = new FileOutputStream(outFile)
         ) {
-            XSSFSheet xssfSheet = workbook.createSheet(excelData.getSheetName());
-
-            XSSFRow sheetRow = xssfSheet.createRow(0);
-            List<String> headerList = excelData.getHeaderList();
-            for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
-                XSSFCell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
-                rowCell.setCellValue(headerList.get(cellIndex));
-            }
-
-            List<Map<String, String>> dataList = excelData.getDataList();
-
-            for (int rowIndex = 0, rowCount = dataList.size(); rowIndex < rowCount; rowIndex++) {
-                XSSFRow xssfRow = xssfSheet.createRow(rowIndex + 1);
-                Map<String, String> dataMap = dataList.get(rowIndex);
-                for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
-                    XSSFCell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
-                    String headerKey = headerList.get(cellIndex);
-                    rowCell.setCellValue(dataMap.getOrDefault(headerKey, ""));
-                }
-            }
+            writeSheet(workbook, excelData);
             workbook.write(fileOutputStream);
         }
     }
 
+    /**
+     * 输出Excel的Sheet页
+     *
+     * @param workbook  工作表格
+     * @param excelData 表格数据
+     */
+    private static void writeSheet(Workbook workbook, ExcelData excelData) {
+        Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
+        // 输出表格头
+        Row sheetRow = xssfSheet.createRow(0);
+        List<String> headerList = excelData.getHeaderList();
+        for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
+            Cell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
+            rowCell.setCellValue(headerList.get(cellIndex));
+        }
+        // 输出表格数据主体
+        List<Map<String, String>> dataList = excelData.getDataList();
+        for (int rowIndex = 0, rowCount = dataList.size(); rowIndex < rowCount; rowIndex++) {
+            Row xssfRow = xssfSheet.createRow(rowIndex + 1);
+            Map<String, String> dataMap = dataList.get(rowIndex);
+            for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
+                Cell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
+                String headerKey = headerList.get(cellIndex);
+                rowCell.setCellValue(dataMap.getOrDefault(headerKey, ""));
+            }
+        }
+    }
 
     /**
      * 读取Excel数据，且第一行为表头

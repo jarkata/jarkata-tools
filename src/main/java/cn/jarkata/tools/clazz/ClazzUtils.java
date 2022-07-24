@@ -13,7 +13,7 @@ public class ClazzUtils {
 
 
     public static String trimClassName(String className) {
-        Objects.requireNonNull(className,"className is null");
+        Objects.requireNonNull(className, "className is null");
         int index = className.lastIndexOf(".cl");
         className = className.substring(0, index);
         return className.replaceAll("/", ".");

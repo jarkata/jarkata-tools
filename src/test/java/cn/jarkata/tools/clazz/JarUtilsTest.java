@@ -7,8 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.Assert.*;
-
 public class JarUtilsTest {
 
     @Test
@@ -16,7 +14,7 @@ public class JarUtilsTest {
         List<Class<?>> classList = JarUtils.readClassFromLocation(
                 "/Users/data/jarkata-tools/src/test/resources/jarkata-facade-1.0-SNAPSHOT.jar");
         System.out.println(classList);
-        Assert.assertEquals(4,classList.size());
+        Assert.assertEquals(4, classList.size());
     }
 
     @Test
