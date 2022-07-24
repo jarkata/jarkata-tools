@@ -14,6 +14,12 @@ import java.util.*;
 
 public class ExcelUtils {
 
+    /**
+     * 写Excel文件至多个Sheet表格中
+     *
+     * @param outFile       输出的excel文件
+     * @param excelDataList 数据集合
+     */
     public static void writeTo(File outFile, List<ExcelData> excelDataList) {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelDataList, "Data Is Null");
@@ -31,6 +37,13 @@ public class ExcelUtils {
     }
 
 
+    /**
+     * 输出数据至Excel中
+     *
+     * @param outFile   Excel文件
+     * @param excelData excel的数据
+     * @throws IOException 写入失败
+     */
     public static void writeTo(File outFile, ExcelData excelData) throws IOException {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelData, "Data Is Null");
@@ -86,7 +99,7 @@ public class ExcelUtils {
     /**
      * @param file             Excel文件
      * @param firstRowIsHeader 判断第一行是否为表头
-     * @return
+     * @return 表格数据
      * @throws IOException
      * @throws InvalidFormatException
      */
