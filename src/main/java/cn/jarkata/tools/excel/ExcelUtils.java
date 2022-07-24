@@ -17,6 +17,8 @@ import java.util.*;
 public class ExcelUtils {
 
     public static void writeTo(File outFile, ExcelData excelData) throws IOException, InvalidFormatException {
+        Objects.requireNonNull(outFile, "Output File is Null");
+        Objects.requireNonNull(excelData, "Data Is Null");
         try (
                 XSSFWorkbook workbook = new XSSFWorkbook();
                 FileOutputStream fileOutputStream = new FileOutputStream(outFile)
@@ -30,8 +32,7 @@ public class ExcelUtils {
                 rowCell.setCellValue(headerList.get(cellIndex));
             }
 
-            List<Map<String, String>> dataList = Optional.ofNullable(excelData.getDataList())
-                    .orElse(new ArrayList<>(0));
+            List<Map<String, String>> dataList = excelData.getDataList();
 
             for (int rowIndex = 0, rowCount = dataList.size(); rowIndex < rowCount; rowIndex++) {
                 XSSFRow xssfRow = xssfSheet.createRow(rowIndex + 1);
