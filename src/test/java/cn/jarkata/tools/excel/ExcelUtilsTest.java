@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,4 +39,18 @@ public class ExcelUtilsTest {
 
     }
 
+    @Test
+    public void testWriteTo() throws IOException, InvalidFormatException {
+        ExcelData data = new ExcelData();
+        data.setHeaderList(Arrays.asList("test1", "test2"));
+        data.setSheetName("remark");
+
+        Map<String, String> dataMap = new HashMap<>();
+        dataMap.put("test1", "32423");
+        Map<String, String> dataMap1 = new HashMap<>();
+        dataMap1.put("test2", "TEST");
+        data.setDataList(Arrays.asList(dataMap, dataMap, dataMap1));
+        ExcelUtils.writeTo(new File("/Users/kart/Desktop/test02.xlsx"), data);
+
+    }
 }

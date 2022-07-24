@@ -2,16 +2,50 @@ package cn.jarkata.tools.excel;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 
 public class ExcelUtils {
+
+    public static void writeTo(File outFile, ExcelData excelData) throws IOException, InvalidFormatException {
+        try (
+                XSSFWorkbook workbook = new XSSFWorkbook();
+                FileOutputStream fileOutputStream = new FileOutputStream(outFile)
+        ) {
+            XSSFSheet xssfSheet = workbook.createSheet(excelData.getSheetName());
+
+            XSSFRow sheetRow = xssfSheet.createRow(0);
+            List<String> headerList = excelData.getHeaderList();
+            for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
+                XSSFCell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
+                rowCell.setCellValue(headerList.get(cellIndex));
+            }
+
+            List<Map<String, String>> dataList = Optional.ofNullable(excelData.getDataList())
+                    .orElse(new ArrayList<>(0));
+
+            for (int rowIndex = 0, rowCount = dataList.size(); rowIndex < rowCount; rowIndex++) {
+                XSSFRow xssfRow = xssfSheet.createRow(rowIndex + 1);
+                Map<String, String> dataMap = dataList.get(rowIndex);
+                for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
+                    XSSFCell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
+                    String headerKey = headerList.get(cellIndex);
+                    rowCell.setCellValue(dataMap.getOrDefault(headerKey, ""));
+                }
+            }
+            workbook.write(fileOutputStream);
+        }
+    }
+
 
     /**
      * 读取Excel数据，且第一行为表头
