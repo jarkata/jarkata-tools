@@ -89,8 +89,8 @@ public class ExcelUtils {
      *
      * @param file Excel文件
      * @return 表格数据
-     * @throws IOException
-     * @throws InvalidFormatException
+     * @throws IOException            文件读取失败
+     * @throws InvalidFormatException Excel格式不正确时
      */
     public static List<Map<String, String>> readExcel(File file) throws IOException, InvalidFormatException {
         return readExcel(file, true);
@@ -100,8 +100,8 @@ public class ExcelUtils {
      * @param file             Excel文件
      * @param firstRowIsHeader 判断第一行是否为表头
      * @return 表格数据
-     * @throws IOException
-     * @throws InvalidFormatException
+     * @throws IOException            文件读取失败
+     * @throws InvalidFormatException Excel格式不正确时
      */
     public static List<Map<String, String>> readExcel(File file, boolean firstRowIsHeader) throws IOException,
             InvalidFormatException {
@@ -115,7 +115,6 @@ public class ExcelUtils {
                 } else {
                     dataList.addAll(readFromSheetWithIndexValue(xssfSheet));
                 }
-
             }
             return dataList;
         }
