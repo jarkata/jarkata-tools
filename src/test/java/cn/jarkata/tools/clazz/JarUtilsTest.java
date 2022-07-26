@@ -25,4 +25,9 @@ public class JarUtilsTest {
             System.out.println(aClass);
         }
     }
+
+    @Test
+    public void unpackJar() throws IOException {
+        JarUtils.unpackJar(new File("/Users/data/code/gitcode/jarkata-tools/src/test/resources/jarkata-facade-1.0-SNAPSHOT.jar"));
+    }
 }
