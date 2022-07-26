@@ -12,3 +12,6 @@
 - 多Sheet数据写入至Excel文件
 
 ## 2.读取Jar文件中的class
+
+- 解压Jar文件（不知道为啥总是缺失MANIFEST.MF文件）
+- 读取jar文件中的所有class文件
