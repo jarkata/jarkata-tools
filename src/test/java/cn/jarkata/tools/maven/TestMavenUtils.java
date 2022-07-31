@@ -1,11 +1,8 @@
 package cn.jarkata.tools.maven;
 
-import org.apache.maven.cli.MavenCli;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 
 public class TestMavenUtils {
 
@@ -24,17 +21,4 @@ public class TestMavenUtils {
     }
 
 
-    @Test
-    public void mavenCli() {
-        String tmpPomPath = "/Users/data/code/gitcode/jarkata-tools/src/test/";
-        System.setProperty("maven.multiModuleProjectDirectory", tmpPomPath);
-        String cmd = "dependency:get -DgroupId=cn.jarkata -DartifactId=jarkata-commons -Dversion=1.0.1";
-        String[] split = cmd.split(" ");
-        MavenCli mavenCli = new MavenCli();
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        int pomPath = mavenCli.doMain(split, tmpPomPath, new PrintStream(outputStream), new PrintStream(outputStream));
-        System.out.println(pomPath);
-        System.out.println(outputStream.toString());
-    }
 }
