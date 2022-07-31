@@ -18,6 +18,14 @@ public class MavenUtils {
         String[] split = cmd.split(" ");
 
         CmdResult cmdResult = CommandUtils.exec(split);
+        String message = cmdResult.getMessage();
+        int buildSuccess = message.indexOf("BUILD SUCCESS");
+        System.out.println(buildSuccess);
+        if (buildSuccess > 0) {
+            System.out.println("下载成功");
+        } else {
+            System.out.println("下载失败");
+        }
         System.out.println(cmdResult);
     }
 }
