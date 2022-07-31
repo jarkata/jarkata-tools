@@ -1,14 +1,13 @@
 package cn.jarkata.tools.maven;
 
-import cn.jarkata.tools.file.FileUtils;
+import org.apache.maven.cli.MavenCli;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
+import java.io.PrintStream;
 
-public class MavenUtils {
+public class TestMavenUtils {
 
     @Test
     public void testMaven() throws IOException, InterruptedException {
@@ -16,28 +15,26 @@ public class MavenUtils {
 
         String mavenHome = System.getenv("MAVEN_HOME");
         String bin = mavenHome + "/bin/mvn";
-        String tmpPomPath = "/Users/data/code/gitcode/jarkata-tools/src/test/java/tmp.xml";
         String targetFilePath = "/Users/data/code/gitcode/jarkata-tools/src/test/logback-classic-1.2.11.jar";
 //        String str = (" install:install-file -Dfile=" + targetFilePath + "-DpomFile=" + tmpPomPath);
 //        String str = (" dependency:get -DgroupId=ch.qos.logback -DartifactId=logback-classic -Dversion=1.2.11"  );
         String str = (" org.apache.maven.plugins:maven-dependency-plugin:2.8:get -DgroupId=ch.qos.logback  " +
                 "-DartifactId=logback-classic -Dversion=1.2.11");
+        MavenUtils.download("ch.qos.logback", "logback-classic", "1.2.11");
+    }
 
-        String cmd = bin + " dependency:get -DgroupId=cn.jarkata -DartifactId=jarkata-tools -Dversion=0.0.1";
+
+    @Test
+    public void mavenCli() {
+        String tmpPomPath = "/Users/data/code/gitcode/jarkata-tools/src/test/";
+        System.setProperty("maven.multiModuleProjectDirectory", tmpPomPath);
+        String cmd = "dependency:get -DgroupId=cn.jarkata -DartifactId=jarkata-commons -Dversion=1.0.1";
         String[] split = cmd.split(" ");
+        MavenCli mavenCli = new MavenCli();
 
-        System.out.println(cmd);
-        ProcessBuilder builder = new ProcessBuilder(Arrays.asList(split));
-        Process process = builder.start();
-
-        InputStream inputStream = process.getInputStream();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        FileUtils.copy(inputStream, outputStream);
-        FileUtils.copy(process.getErrorStream(), outputStream);
-        System.out.println(new String(outputStream.toByteArray()));
-        int waitFor = process.waitFor();
-        System.out.println(waitFor);
-        int value = process.exitValue();
-        System.out.println(value);
+        int pomPath = mavenCli.doMain(split, tmpPomPath, new PrintStream(outputStream), new PrintStream(outputStream));
+        System.out.println(pomPath);
+        System.out.println(outputStream.toString());
     }
 }
