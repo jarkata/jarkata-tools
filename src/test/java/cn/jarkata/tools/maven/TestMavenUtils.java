@@ -17,7 +17,8 @@ public class TestMavenUtils {
 //        String str = (" dependency:get -DgroupId=ch.qos.logback -DartifactId=logback-classic -Dversion=1.2.11"  );
         String str = (" org.apache.maven.plugins:maven-dependency-plugin:2.8:get -DgroupId=ch.qos.logback  " +
                 "-DartifactId=logback-classic -Dversion=1.2.11");
-        MavenUtils.download("ch.qos.logback", "logback-classic", "1.2.11");
+        boolean download = MavenUtils.download("ch.qos.logback", "logback-classic", "1.2.11");
+        System.out.println(download);
     }
 
 

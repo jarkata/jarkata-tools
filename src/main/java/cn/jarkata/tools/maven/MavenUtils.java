@@ -14,7 +14,7 @@ public class MavenUtils {
      * @param groupId
      * @param artifactId
      * @param version
-     * @return
+     * @return 下载成功返回true，下载失败，返回false
      * @throws IOException
      * @throws InterruptedException
      */
