@@ -27,17 +27,10 @@ public class MavenUtils {
         String cmd =
                 bin + " dependency:get -DgroupId=" + groupId + " -DartifactId=" + artifactId + " -Dversion=" + version;
         String[] split = cmd.split(" ");
-
         CmdResult cmdResult = CommandUtils.exec(split);
         String message = cmdResult.getMessage();
         int buildSuccess = message.indexOf("BUILD SUCCESS");
-        if (buildSuccess > 0) {
-            System.out.println("下载成功");
-            return true;
-        } else {
-            System.out.println("下载失败");
-        }
-        return false;
+        return buildSuccess > 0;
 
     }
 }
