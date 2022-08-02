@@ -1,6 +1,6 @@
 package cn.jarkata.tools.command;
 
-import cn.jarkata.tools.file.FileUtils;
+import cn.jarkata.tools.io.FileUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

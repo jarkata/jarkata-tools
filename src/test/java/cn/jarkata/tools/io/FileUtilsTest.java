@@ -1,4 +1,4 @@
-package cn.jarkata.tools.file;
+package cn.jarkata.tools.io;
 
 import junit.framework.TestCase;
 
