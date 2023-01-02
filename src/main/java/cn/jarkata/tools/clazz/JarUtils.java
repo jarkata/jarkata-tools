@@ -1,6 +1,6 @@
 package cn.jarkata.tools.clazz;
 
-import cn.jarkata.tools.io.FileUtils;
+import cn.jarkata.commons.utils.FileUtils;
 
 import java.io.*;
 import java.net.URL;
