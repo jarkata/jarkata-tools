@@ -1,11 +1,12 @@
 package cn.jarkata.tools.excel;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import cn.jarkata.commons.utils.FileUtils;
 import org.apache.poi.ss.usermodel.BuiltinFormats;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -14,14 +15,25 @@ import java.util.Map;
 public class ExcelUtilsTest {
 
     @Test
-    public void readExcel() throws IOException, InvalidFormatException {
+    public void readExcel() {
 
-        File file = new File("/Users/kart/Desktop/test.xlsx");
-
+        File file = FileUtils.getFile("test.xlsx");
         List<Map<String, String>> mapList = ExcelUtils.readExcel(file, false);
-
         System.out.println(mapList);
+        Assert.assertNotNull(mapList);
+        Map<String, String> dataMap = mapList.get(0);
+        Assert.assertEquals(dataMap.get("0"), "test1");
+    }
 
+    @Test
+    public void readExcelFromStream() {
+
+        InputStream file = FileUtils.getStream("test.xlsx");
+        List<Map<String, String>> mapList = ExcelUtils.readExcel(file, false);
+        System.out.println(mapList);
+        Assert.assertNotNull(mapList);
+        Map<String, String> dataMap = mapList.get(0);
+        Assert.assertEquals(dataMap.get("0"), "test1");
     }
 
     @Test
@@ -38,7 +50,7 @@ public class ExcelUtilsTest {
     }
 
     @Test
-    public void testWriteTo() throws IOException, InvalidFormatException {
+    public void testWriteTo() {
         ExcelData data = new ExcelData();
         data.setHeaderList(Arrays.asList("test1", "test2"));
         data.setSheetName("remark");
@@ -48,7 +60,7 @@ public class ExcelUtilsTest {
         Map<String, String> dataMap1 = new HashMap<>();
         dataMap1.put("test2", "TEST");
         data.setDataList(Arrays.asList(dataMap, dataMap, dataMap1));
-        ExcelUtils.writeTo(new File("/Users/kart/Desktop/test02.xlsx"), data);
+        ExcelUtils.writeTo(new File("/Users/kart/Desktop/test.xlsx"), data);
 
     }
 }
