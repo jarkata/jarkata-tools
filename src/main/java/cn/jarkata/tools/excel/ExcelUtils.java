@@ -1,13 +1,10 @@
 package cn.jarkata.tools.excel;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -23,10 +20,7 @@ public class ExcelUtils {
     public static void writeTo(File outFile, List<ExcelData> excelDataList) {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelDataList, "Data Is Null");
-        try (
-                Workbook workbook = new XSSFWorkbook();
-                FileOutputStream fileOutputStream = new FileOutputStream(outFile)
-        ) {
+        try (Workbook workbook = new XSSFWorkbook(); FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
             for (ExcelData excelData : excelDataList) {
                 writeSheet(workbook, excelData);
             }
@@ -36,23 +30,33 @@ public class ExcelUtils {
         }
     }
 
+    public static void writeTo(OutputStream outputStream, ExcelData... excelDataList) {
+        Objects.requireNonNull(outputStream, "Output File is Null");
+        Objects.requireNonNull(excelDataList, "Data Is Null");
+        try (Workbook workbook = new XSSFWorkbook()) {
+            for (ExcelData excelData : excelDataList) {
+                writeSheet(workbook, excelData);
+            }
+            workbook.write(outputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * 输出数据至Excel中
      *
      * @param outFile   Excel文件
      * @param excelData excel的数据
-     * @throws IOException 写入失败
      */
-    public static void writeTo(File outFile, ExcelData excelData) throws IOException {
+    public static void writeTo(File outFile, ExcelData excelData) {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelData, "Data Is Null");
-        try (
-                Workbook workbook = new XSSFWorkbook();
-                FileOutputStream fileOutputStream = new FileOutputStream(outFile)
-        ) {
+        try (Workbook workbook = new XSSFWorkbook(); FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
             writeSheet(workbook, excelData);
             workbook.write(fileOutputStream);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
         }
     }
 
@@ -89,22 +93,52 @@ public class ExcelUtils {
      *
      * @param file Excel文件
      * @return 表格数据
-     * @throws IOException            文件读取失败
-     * @throws InvalidFormatException Excel格式不正确时
      */
-    public static List<Map<String, String>> readExcel(File file) throws IOException, InvalidFormatException {
+    public static List<Map<String, String>> readExcel(File file) {
         return readExcel(file, true);
+    }
+
+    public static List<Map<String, String>> readExcel(InputStream inputStream, boolean firstRowIsHeader) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+            int numberOfSheets = workbook.getNumberOfSheets();
+            List<Map<String, String>> dataList = new ArrayList<>();
+            for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
+                XSSFSheet xssfSheet = workbook.getSheetAt(sheetIndex);
+                if (firstRowIsHeader) {
+                    dataList.addAll(readFromSheetWithHeader(xssfSheet));
+                } else {
+                    dataList.addAll(readFromSheetWithIndexValue(xssfSheet));
+                }
+            }
+            return dataList;
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
+
+    public static List<Map<String, String>> readExcel(InputStream inputStream, boolean firstRowIsHeader, String... sheetNameList) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+            List<Map<String, String>> dataList = new ArrayList<>();
+            for (String sheetName : sheetNameList) {
+                XSSFSheet xssfSheet = workbook.getSheet(sheetName);
+                if (firstRowIsHeader) {
+                    dataList.addAll(readFromSheetWithHeader(xssfSheet));
+                } else {
+                    dataList.addAll(readFromSheetWithIndexValue(xssfSheet));
+                }
+            }
+            return dataList;
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
     /**
      * @param file             Excel文件
      * @param firstRowIsHeader 判断第一行是否为表头
      * @return 表格数据
-     * @throws IOException            文件读取失败
-     * @throws InvalidFormatException Excel格式不正确时
      */
-    public static List<Map<String, String>> readExcel(File file, boolean firstRowIsHeader) throws IOException,
-            InvalidFormatException {
+    public static List<Map<String, String>> readExcel(File file, boolean firstRowIsHeader) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(file)) {
             int numberOfSheets = workbook.getNumberOfSheets();
             List<Map<String, String>> dataList = new ArrayList<>();
@@ -117,12 +151,13 @@ public class ExcelUtils {
                 }
             }
             return dataList;
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
         }
     }
 
 
-    public static List<Map<String, String>> readExcel(File file, String... sheetNameList) throws IOException,
-            InvalidFormatException {
+    public static List<Map<String, String>> readExcel(File file, String... sheetNameList) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(file)) {
             List<Map<String, String>> dataList = new ArrayList<>();
             for (String sheetName : sheetNameList) {
@@ -130,10 +165,12 @@ public class ExcelUtils {
                 dataList.addAll(readFromSheetWithHeader(xssfSheet));
             }
             return dataList;
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
         }
     }
 
-    public static List<Map<String, String>> readExcel(File... fileList) throws IOException, InvalidFormatException {
+    public static List<Map<String, String>> readExcel(File... fileList) {
         List<Map<String, String>> dataList = new ArrayList<>();
         for (File file : fileList) {
             List<Map<String, String>> mapList = readExcel(file, true);
@@ -148,7 +185,7 @@ public class ExcelUtils {
      * @param sheet sheet页
      * @return 表格数据
      */
-    protected static List<Map<String, String>> readFromSheetWithIndexValue(Sheet sheet) {
+    public static List<Map<String, String>> readFromSheetWithIndexValue(Sheet sheet) {
         int lastRowNum = sheet.getLastRowNum();
         if (lastRowNum < 0) {
             return new ArrayList<>(0);
@@ -169,7 +206,7 @@ public class ExcelUtils {
      * @param sheet Excel Sheet页
      * @return 表哥数据
      */
-    protected static List<Map<String, String>> readFromSheetWithHeader(Sheet sheet) {
+    public static List<Map<String, String>> readFromSheetWithHeader(Sheet sheet) {
         int lastRowNum = sheet.getLastRowNum();
         if (lastRowNum < 0) {
             return new ArrayList<>(0);
@@ -234,7 +271,7 @@ public class ExcelUtils {
         } else if (cellType == CellType.FORMULA) {
             return rowCell.getCellFormula();
         } else {
-            return rowCell.getStringCellValue().replaceAll("\n", "").replaceAll("\r", "");
+            return rowCell.getStringCellValue().replace("\n", "").replace("\r", "");
         }
     }
 
