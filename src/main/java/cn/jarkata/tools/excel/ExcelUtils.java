@@ -20,7 +20,8 @@ public class ExcelUtils {
     public static void writeTo(File outFile, List<ExcelData> excelDataList) {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelDataList, "Data Is Null");
-        try (Workbook workbook = new XSSFWorkbook(); FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
+        try (Workbook workbook = new XSSFWorkbook();
+             FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
             for (ExcelData excelData : excelDataList) {
                 writeSheet(workbook, excelData);
             }
@@ -52,7 +53,8 @@ public class ExcelUtils {
     public static void writeTo(File outFile, ExcelData excelData) {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelData, "Data Is Null");
-        try (Workbook workbook = new XSSFWorkbook(); FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
+        try (Workbook workbook = new XSSFWorkbook();
+             FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
             writeSheet(workbook, excelData);
             workbook.write(fileOutputStream);
         } catch (Exception ex) {
@@ -114,6 +116,10 @@ public class ExcelUtils {
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
         }
+    }
+
+    public static List<Map<String, String>> readExcel(InputStream inputStream, String... sheetNameList) {
+        return readExcel(inputStream, true, sheetNameList);
     }
 
     public static List<Map<String, String>> readExcel(InputStream inputStream, boolean firstRowIsHeader, String... sheetNameList) {
