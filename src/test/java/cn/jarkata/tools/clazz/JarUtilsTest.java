@@ -1,5 +1,6 @@
 package cn.jarkata.tools.clazz;
 
+import cn.jarkata.commons.utils.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,16 +12,17 @@ public class JarUtilsTest {
 
     @Test
     public void testJar() throws IOException {
-        List<Class<?>> classList = JarUtils.readClassFromLocation(
-                "/Users/data/jarkata-tools/src/test/resources/jarkata-facade-1.0-SNAPSHOT.jar");
+        File file = FileUtils.getFile("jarkata-facade-1.0-SNAPSHOT.jar");
+        String absolutePath = file.getAbsolutePath();
+        List<Class<?>> classList = JarUtils.readClassFromLocation(absolutePath);
         System.out.println(classList);
         Assert.assertEquals(4, classList.size());
     }
 
     @Test
     public void readClasses() throws IOException {
-        List<Class<?>> classList = JarUtils.readClasses(
-                new File("/Users/data/jarkata-tools/src/test/resources/jarkata-facade-1.0-SNAPSHOT.jar"));
+        File file = FileUtils.getFile("jarkata-facade-1.0-SNAPSHOT.jar");
+        List<Class<?>> classList = JarUtils.readClasses(file);
         for (Class<?> aClass : classList) {
             System.out.println(aClass);
         }
@@ -28,6 +30,7 @@ public class JarUtilsTest {
 
     @Test
     public void unpackJar() throws IOException {
-        JarUtils.unpackJar(new File("/Users/data/code/gitcode/jarkata-tools/src/test/resources/jarkata-facade-1.0-SNAPSHOT.jar"));
+        File file = FileUtils.getFile("jarkata-facade-1.0-SNAPSHOT.jar");
+        JarUtils.unpackJar(file);
     }
 }
