@@ -63,4 +63,14 @@ public class ExcelUtilsTest {
         ExcelUtils.writeTo(new File("/Users/kart/Desktop/test.xlsx"), data);
 
     }
+
+    @Test
+    public void writeTo() {
+        ExcelData data = new ExcelData();
+        data.setSheetName("remark234");
+        UserVO userVO = new UserVO(1L, "test");
+        UserVO userVO1 = new UserVO(2L, "test232");
+        data.setData(Arrays.asList(userVO, userVO1));
+        ExcelUtils.writeTo(new File("./test342.xlsx"), data);
+    }
 }

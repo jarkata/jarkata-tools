@@ -9,9 +9,29 @@ public class ExcelData {
 
     private List<String> headerList;
 
+    private List<String> ignoreHeaders;
+
     private String sheetName;
 
     private List<Map<String, String>> dataList;
+
+    private List<?> data;
+
+    public List<?> getData() {
+        return Optional.ofNullable(data).orElse(new ArrayList<>(0));
+    }
+
+    public void setData(List<?> data) {
+        this.data = data;
+    }
+
+    public List<String> getIgnoreHeaders() {
+        return Optional.ofNullable(ignoreHeaders).orElse(new ArrayList<>(0));
+    }
+
+    public void setIgnoreHeaders(List<String> ignoreHeaders) {
+        this.ignoreHeaders = ignoreHeaders;
+    }
 
     public List<String> getHeaderList() {
         return Optional.ofNullable(headerList).orElse(new ArrayList<>(0));

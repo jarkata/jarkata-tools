@@ -1,10 +1,12 @@
 package cn.jarkata.tools.excel;
 
+import cn.jarkata.commons.utils.ReflectionUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -17,7 +19,7 @@ public class ExcelUtils {
      * @param outFile       输出的excel文件
      * @param excelDataList 数据集合
      */
-    public static void writeTo(File outFile, List<ExcelData> excelDataList) {
+    public static void writeTo(File outFile, ExcelData... excelDataList) {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelDataList, "Data Is Null");
         try (Workbook workbook = new XSSFWorkbook();
@@ -45,30 +47,18 @@ public class ExcelUtils {
     }
 
     /**
-     * 输出数据至Excel中
-     *
-     * @param outFile   Excel文件
-     * @param excelData excel的数据
-     */
-    public static void writeTo(File outFile, ExcelData excelData) {
-        Objects.requireNonNull(outFile, "Output File is Null");
-        Objects.requireNonNull(excelData, "Data Is Null");
-        try (Workbook workbook = new XSSFWorkbook();
-             FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
-            writeSheet(workbook, excelData);
-            workbook.write(fileOutputStream);
-        } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
-        }
-    }
-
-    /**
      * 输出Excel的Sheet页
      *
      * @param workbook  工作表格
      * @param excelData 表格数据
      */
     private static void writeSheet(Workbook workbook, ExcelData excelData) {
+        Objects.requireNonNull(excelData, "Excel数据对象为空");
+        List<?> dataObjList = excelData.getData();
+        if (Objects.nonNull(dataObjList) && dataObjList.size() > 0) {
+            writeObjectSheet(workbook, excelData);
+            return;
+        }
         Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
         // 输出表格头
         Row sheetRow = xssfSheet.createRow(0);
@@ -88,6 +78,46 @@ public class ExcelUtils {
                 rowCell.setCellValue(dataMap.getOrDefault(headerKey, ""));
             }
         }
+    }
+
+    private static void writeObjectSheet(Workbook workbook, ExcelData excelData) {
+        Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
+        // 输出表格头
+        Row sheetRow = xssfSheet.createRow(0);
+
+        List<?> dataList = excelData.getData();
+        if (dataList.size() == 0) {
+            return;
+        }
+        Object fieldObj = dataList.get(0);
+        Class<?> objClass = fieldObj.getClass();
+
+        List<Field> fieldList = ReflectionUtils.getFieldList(objClass);
+        int firstCellIndex = 0;
+        for (Field field : fieldList) {
+            Cell rowCell = sheetRow.createCell(firstCellIndex, CellType.STRING);
+            rowCell.setCellValue(field.getName());
+            firstCellIndex++;
+        }
+        // 输出表格数据主体
+        int rowIndex = 0;
+        for (Object dataObj : dataList) {
+            Row xssfRow = xssfSheet.createRow(rowIndex + 1);
+            int cellIndex = 0;
+            for (Field field : fieldList) {
+                Cell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
+                String dataVal = null;
+                try {
+                    field.setAccessible(true);
+                    dataVal = Objects.toString(field.get(dataObj), "");
+                } catch (Exception ignored) {
+                }
+                rowCell.setCellValue(dataVal);
+                cellIndex++;
+            }
+            rowIndex++;
+        }
+
     }
 
     /**
