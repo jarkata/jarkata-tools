@@ -6,7 +6,7 @@
 
     <groupId>cn.jarkata</groupId>
     <artifactId>jarkata-tools</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <name>jarkata-tools</name>
 
     <url>https://github.com/jarkata/jarkata-tools.git</url>
@@ -17,18 +17,14 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <poi.version>5.2.2</poi.version>
         <junit.version>4.13.2</junit.version>
+        <jarkata-commons.version>2.0.7</jarkata-commons.version>
     </properties>
 
     <dependencies>
-        <!--        <dependency>-->
-        <!--            <groupId>ch.qos.logback</groupId>-->
-        <!--            <artifactId>logback-classic</artifactId>-->
-        <!--            <version>1.2.11</version>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>cn.jarkata</groupId>
             <artifactId>jarkata-commons</artifactId>
-            <version>2.0.7</version>
+            <version>${jarkata-commons.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
