@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExcelUtils {
 
@@ -62,7 +63,7 @@ public class ExcelUtils {
         Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
         // 输出表格头
         Row sheetRow = xssfSheet.createRow(0);
-        List<String> headerList = excelData.getHeaderList();
+        List<String> headerList = excelData.getHeaderList().stream().filter(key -> !excelData.getIgnoreHeaders().contains(key)).collect(Collectors.toList());
         for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
             Cell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
             rowCell.setCellValue(headerList.get(cellIndex));
@@ -92,7 +93,7 @@ public class ExcelUtils {
         Object fieldObj = dataList.get(0);
         Class<?> objClass = fieldObj.getClass();
 
-        List<Field> fieldList = ReflectionUtils.getFieldList(objClass);
+        List<Field> fieldList = ReflectionUtils.getFieldList(objClass).stream().filter(field -> !excelData.getIgnoreHeaders().contains(field.getName())).collect(Collectors.toList());
         int firstCellIndex = 0;
         for (Field field : fieldList) {
             Cell rowCell = sheetRow.createCell(firstCellIndex, CellType.STRING);
@@ -103,21 +104,25 @@ public class ExcelUtils {
         int rowIndex = 0;
         for (Object dataObj : dataList) {
             Row xssfRow = xssfSheet.createRow(rowIndex + 1);
-            int cellIndex = 0;
-            for (Field field : fieldList) {
-                Cell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
-                String dataVal = null;
-                try {
-                    field.setAccessible(true);
-                    dataVal = Objects.toString(field.get(dataObj), "");
-                } catch (Exception ignored) {
-                }
-                rowCell.setCellValue(dataVal);
-                cellIndex++;
-            }
+            setObjCellValue(xssfRow, fieldList, dataObj);
             rowIndex++;
         }
 
+    }
+
+    private static void setObjCellValue(Row sheetRow, List<Field> fieldList, Object dataObj) {
+        int cellIndex = 0;
+        for (Field field : fieldList) {
+            Cell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
+            String dataVal = null;
+            try {
+                field.setAccessible(true);
+                dataVal = Objects.toString(field.get(dataObj), "");
+            } catch (Exception ignored) {
+            }
+            rowCell.setCellValue(dataVal);
+            cellIndex++;
+        }
     }
 
     /**

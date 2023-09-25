@@ -7,10 +7,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ExcelUtilsTest {
 
@@ -70,6 +67,7 @@ public class ExcelUtilsTest {
         data.setSheetName("remark234");
         UserVO userVO = new UserVO(1L, "test");
         UserVO userVO1 = new UserVO(2L, "test232");
+        data.setIgnoreHeaders(Collections.singletonList("username"));
         data.setData(Arrays.asList(userVO, userVO1));
         ExcelUtils.writeTo(new File("./test342.xlsx"), data);
     }
