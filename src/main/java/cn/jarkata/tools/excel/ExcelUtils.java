@@ -290,8 +290,14 @@ public class ExcelUtils {
     }
 
     private static String getCellValue(Cell rowCell) {
+        if (Objects.isNull(rowCell)) {
+            return "";
+        }
         CellType cellType = rowCell.getCellType();
-        if (cellType == CellType.NUMERIC) {
+        if (Objects.isNull(cellType)) {
+            return "";
+        }
+        if (CellType.NUMERIC.equals(cellType)) {
             double numericCellValue = rowCell.getNumericCellValue();
             CellStyle cellStyle = rowCell.getCellStyle();
             short dataFormat = cellStyle.getDataFormat();
@@ -309,7 +315,7 @@ public class ExcelUtils {
             }
             DecimalFormat decimalFormat = new DecimalFormat("###.##");
             return decimalFormat.format(numericCellValue);
-        } else if (cellType == CellType.FORMULA) {
+        } else if (CellType.FORMULA.equals(cellType)) {
             return rowCell.getCellFormula();
         } else {
             return rowCell.getStringCellValue().replace("\n", "").replace("\r", "");
