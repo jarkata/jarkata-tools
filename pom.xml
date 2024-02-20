@@ -6,7 +6,7 @@
 
     <groupId>cn.jarkata</groupId>
     <artifactId>jarkata-tools</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
     <name>jarkata-tools</name>
 
     <url>https://github.com/jarkata/jarkata-tools.git</url>
@@ -17,7 +17,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <poi.version>5.2.2</poi.version>
         <junit.version>4.13.2</junit.version>
-        <jarkata-commons.version>2.0.7</jarkata-commons.version>
+        <jarkata-commons.version>2.0.10</jarkata-commons.version>
     </properties>
 
     <dependencies>
@@ -42,15 +42,7 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
-            <scope>provided</scope>
         </dependency>
-        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.maven/maven-embedder &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.maven</groupId>-->
-        <!--            <artifactId>maven-embedder</artifactId>-->
-        <!--            <version>3.8.6</version>-->
-        <!--        </dependency>-->
-
     </dependencies>
 
 
