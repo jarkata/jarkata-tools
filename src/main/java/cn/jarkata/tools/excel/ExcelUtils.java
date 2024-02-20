@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ExcelUtils {
@@ -23,8 +24,7 @@ public class ExcelUtils {
     public static void writeTo(File outFile, ExcelData... excelDataList) {
         Objects.requireNonNull(outFile, "Output File is Null");
         Objects.requireNonNull(excelDataList, "Data Is Null");
-        try (Workbook workbook = new XSSFWorkbook();
-             FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
+        try (Workbook workbook = new XSSFWorkbook(); FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
             for (ExcelData excelData : excelDataList) {
                 writeSheet(workbook, excelData);
             }
@@ -56,7 +56,7 @@ public class ExcelUtils {
     private static void writeSheet(Workbook workbook, ExcelData excelData) {
         Objects.requireNonNull(excelData, "Excel数据对象为空");
         List<?> dataObjList = excelData.getData();
-        if (Objects.nonNull(dataObjList) && dataObjList.size() > 0) {
+        if (Objects.nonNull(dataObjList) && !dataObjList.isEmpty()) {
             writeObjectSheet(workbook, excelData);
             return;
         }
@@ -86,8 +86,8 @@ public class ExcelUtils {
         // 输出表格头
         Row sheetRow = xssfSheet.createRow(0);
 
-        List<?> dataList = excelData.getData();
-        if (dataList.size() == 0) {
+        List<?> dataList = Optional.ofNullable(excelData.getData()).orElse(new ArrayList<>(0));
+        if (dataList.isEmpty()) {
             return;
         }
         Object fieldObj = dataList.get(0);
@@ -122,6 +122,115 @@ public class ExcelUtils {
             }
             rowCell.setCellValue(dataVal);
             cellIndex++;
+        }
+    }
+
+
+    public static void readExcel(InputStream inputStream, String[] sheetNameList, Consumer<Map<String, String>> consumer) {
+        readExcel(inputStream, true, sheetNameList, consumer);
+    }
+
+    public static void readExcel(InputStream inputStream, boolean firstRowIsHeader, String[] sheetNameList, Consumer<Map<String, String>> consumer) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+            for (String sheetName : sheetNameList) {
+                XSSFSheet xssfSheet = workbook.getSheet(sheetName);
+                if (firstRowIsHeader) {
+                    readFromSheetWithHeader(xssfSheet, consumer);
+                } else {
+                    readFromSheetWithIndexValue(xssfSheet, consumer);
+                }
+            }
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
+
+    public static void readExcel(File[] fileList, Consumer<Map<String, String>> consumer) {
+        for (File file : fileList) {
+            readExcel(file, true, consumer);
+        }
+    }
+
+    public static void readExcel(InputStream inputStream, Consumer<Map<String, String>> consumer) {
+        readExcel(inputStream, true, consumer);
+    }
+
+    /**
+     * @param inputStream      Excel文件
+     * @param firstRowIsHeader 判断第一行是否为表头
+     */
+    public static void readExcel(InputStream inputStream, boolean firstRowIsHeader, Consumer<Map<String, String>> consumer) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+            int numberOfSheets = workbook.getNumberOfSheets();
+            for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
+                XSSFSheet xssfSheet = workbook.getSheetAt(sheetIndex);
+                if (firstRowIsHeader) {
+                    readFromSheetWithHeader(xssfSheet, consumer);
+                } else {
+                    readFromSheetWithIndexValue(xssfSheet, consumer);
+                }
+            }
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
+
+    /**
+     * @param file             Excel文件
+     * @param firstRowIsHeader 判断第一行是否为表头
+     */
+    public static void readExcel(File file, boolean firstRowIsHeader, Consumer<Map<String, String>> consumer) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(file)) {
+            int numberOfSheets = workbook.getNumberOfSheets();
+            for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
+                XSSFSheet xssfSheet = workbook.getSheetAt(sheetIndex);
+                if (firstRowIsHeader) {
+                    readFromSheetWithHeader(xssfSheet, consumer);
+                } else {
+                    readFromSheetWithIndexValue(xssfSheet, consumer);
+                }
+            }
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
+
+    public static void readFromSheetWithHeader(Sheet sheet, Consumer<Map<String, String>> consumer) {
+        int lastRowNum = sheet.getLastRowNum();
+        if (lastRowNum < 0) {
+            return;
+        }
+        if (Objects.isNull(consumer)) {
+            return;
+        }
+        int firstRowNum = sheet.getFirstRowNum();
+        Row firstRow = sheet.getRow(firstRowNum);
+        Map<String, String> sheetHeader = readRowIndexValue(firstRow);
+        for (int rowIndex = 1; rowIndex < lastRowNum; rowIndex++) {
+            Row sheetRow = sheet.getRow(rowIndex);
+            Map<String, String> rowValue = readRowValue(sheetRow, sheetHeader);
+            consumer.accept(rowValue);
+        }
+    }
+
+
+    /**
+     * 从Excel Sheet读取数据，且其Key为单元格的索引值
+     *
+     * @param sheet sheet页
+     */
+    public static void readFromSheetWithIndexValue(Sheet sheet, Consumer<Map<String, String>> consumer) {
+        int lastRowNum = sheet.getLastRowNum();
+        if (lastRowNum < 0) {
+            return;
+        }
+        if (Objects.isNull(consumer)) {
+            return;
+        }
+        for (int rowIndex = 0; rowIndex < lastRowNum; rowIndex++) {
+            Row sheetRow = sheet.getRow(rowIndex);
+            Map<String, String> rowValue = readRowIndexValue(sheetRow);
+            consumer.accept(rowValue);
         }
     }
 
@@ -211,6 +320,7 @@ public class ExcelUtils {
         }
     }
 
+
     public static List<Map<String, String>> readExcel(File... fileList) {
         List<Map<String, String>> dataList = new ArrayList<>();
         for (File file : fileList) {
@@ -265,15 +375,23 @@ public class ExcelUtils {
     }
 
 
+    /**
+     * Read Row Data
+     *
+     * @param sheetRow         row
+     * @param firstRowValueMap header data
+     * @return row data
+     */
     private static Map<String, String> readRowValue(Row sheetRow, Map<String, String> firstRowValueMap) {
+        firstRowValueMap = Optional.ofNullable(firstRowValueMap).orElse(new HashMap<>(0));
         short lastCellNum = sheetRow.getLastCellNum();
-        Map<String, String> headerMap = new HashMap<>(lastCellNum);
+        Map<String, String> rowValueMap = new HashMap<>(lastCellNum);
         for (int index = 0; index < lastCellNum; index++) {
             Cell rowCell = sheetRow.getCell(index);
             String headerKey = firstRowValueMap.get(Objects.toString(index));
-            headerMap.put(headerKey, getCellValue(rowCell));
+            rowValueMap.put(headerKey, getCellValue(rowCell));
         }
-        return headerMap;
+        return rowValueMap;
     }
 
     private static Map<String, String> readRowIndexValue(Row sheetRow) {

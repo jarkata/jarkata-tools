@@ -12,6 +12,17 @@ import java.util.*;
 public class ExcelUtilsTest {
 
     @Test
+    public void readExcelCallback() {
+
+        File file = FileUtils.getFile("test.xlsx");
+        ExcelUtils.readExcel(file, false, data -> {
+            Assert.assertNotNull(data);
+            System.out.println(data);
+        });
+
+    }
+
+    @Test
     public void readExcel() {
 
         File file = FileUtils.getFile("test.xlsx");
