@@ -1,6 +1,7 @@
 package cn.jarkata.tools.excel;
 
 import cn.jarkata.commons.utils.ReflectionUtils;
+import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -44,6 +45,11 @@ public class ExcelUtils {
             workbook.write(outputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            try {
+                outputStream.close();
+            } catch (Exception ignore) {
+            }
         }
     }
 
@@ -110,7 +116,7 @@ public class ExcelUtils {
 
     }
 
-    private static void setObjCellValue(Row sheetRow, List<Field> fieldList, Object dataObj) {
+    protected static void setObjCellValue(Row sheetRow, List<Field> fieldList, Object dataObj) {
         int cellIndex = 0;
         for (Field field : fieldList) {
             Cell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
@@ -131,7 +137,12 @@ public class ExcelUtils {
     }
 
     public static void readExcel(InputStream inputStream, boolean firstRowIsHeader, String[] sheetNameList, Consumer<Map<String, String>> consumer) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+        XSSFWorkbook workbook = null;
+        OPCPackage opcPackage = null;
+        try {
+            inputStream = new BufferedInputStream(inputStream);
+            opcPackage = OPCPackage.open(inputStream);
+            workbook = new XSSFWorkbook(opcPackage);
             for (String sheetName : sheetNameList) {
                 XSSFSheet xssfSheet = workbook.getSheet(sheetName);
                 if (firstRowIsHeader) {
@@ -142,6 +153,23 @@ public class ExcelUtils {
             }
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
+        } finally {
+            closeResourceQuitely(inputStream, opcPackage, workbook);
+        }
+    }
+
+    private static void closeResourceQuitely(InputStream inputStream, OPCPackage opcPackage, XSSFWorkbook workbook) {
+        try {
+            if (Objects.nonNull(inputStream)) {
+                inputStream.close();
+            }
+            if (Objects.nonNull(opcPackage)) {
+                opcPackage.close();
+            }
+            if (Objects.nonNull(workbook)) {
+                workbook.close();
+            }
+        } catch (Exception ignore) {
         }
     }
 
@@ -160,7 +188,12 @@ public class ExcelUtils {
      * @param firstRowIsHeader 判断第一行是否为表头
      */
     public static void readExcel(InputStream inputStream, boolean firstRowIsHeader, Consumer<Map<String, String>> consumer) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+        XSSFWorkbook workbook = null;
+        OPCPackage opcPackage = null;
+        try {
+            inputStream = new BufferedInputStream(inputStream);
+            opcPackage = OPCPackage.open(inputStream);
+            workbook = new XSSFWorkbook(opcPackage);
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
                 XSSFSheet xssfSheet = workbook.getSheetAt(sheetIndex);
@@ -172,6 +205,8 @@ public class ExcelUtils {
             }
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
+        } finally {
+            closeResourceQuitely(inputStream, opcPackage, workbook);
         }
     }
 
@@ -180,10 +215,19 @@ public class ExcelUtils {
      * @param firstRowIsHeader 判断第一行是否为表头
      */
     public static void readExcel(File file, boolean firstRowIsHeader, Consumer<Map<String, String>> consumer) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(file)) {
+        XSSFWorkbook workbook = null;
+        OPCPackage opcPackage = null;
+        InputStream inputStream = null;
+        try {
+            inputStream = new BufferedInputStream(new FileInputStream(file));
+            opcPackage = OPCPackage.open(inputStream);
+            workbook = new XSSFWorkbook(opcPackage);
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
                 XSSFSheet xssfSheet = workbook.getSheetAt(sheetIndex);
+                if (Objects.isNull(xssfSheet)) {
+                    continue;
+                }
                 if (firstRowIsHeader) {
                     readFromSheetWithHeader(xssfSheet, consumer);
                 } else {
@@ -192,6 +236,8 @@ public class ExcelUtils {
             }
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
+        } finally {
+            closeResourceQuitely(inputStream, opcPackage, workbook);
         }
     }
 
@@ -205,11 +251,19 @@ public class ExcelUtils {
         }
         int firstRowNum = sheet.getFirstRowNum();
         Row firstRow = sheet.getRow(firstRowNum);
-        Map<String, String> sheetHeader = readRowIndexValue(firstRow);
-        for (int rowIndex = 1; rowIndex < lastRowNum; rowIndex++) {
-            Row sheetRow = sheet.getRow(rowIndex);
-            Map<String, String> rowValue = readRowValue(sheetRow, sheetHeader);
-            consumer.accept(rowValue);
+        Map<Integer, String> sheetHeader = readRowIndexValue(firstRow);
+        try {
+            for (int rowIndex = 1; rowIndex <= lastRowNum; rowIndex++) {
+                Row sheetRow = sheet.getRow(rowIndex);
+                Map<String, String> rowValue = readRowValue(sheetRow, sheetHeader);
+                try {
+                    consumer.accept(rowValue);
+                } finally {
+                    rowValue.clear();
+                }
+            }
+        } finally {
+            sheetHeader.clear();
         }
     }
 
@@ -227,10 +281,14 @@ public class ExcelUtils {
         if (Objects.isNull(consumer)) {
             return;
         }
-        for (int rowIndex = 0; rowIndex < lastRowNum; rowIndex++) {
+        for (int rowIndex = 0; rowIndex <= lastRowNum; rowIndex++) {
             Row sheetRow = sheet.getRow(rowIndex);
-            Map<String, String> rowValue = readRowIndexValue(sheetRow);
-            consumer.accept(rowValue);
+            Map<String, String> rowValue = readRowValue(sheetRow);
+            try {
+                consumer.accept(rowValue);
+            } finally {
+                rowValue.clear();
+            }
         }
     }
 
@@ -245,7 +303,11 @@ public class ExcelUtils {
     }
 
     public static List<Map<String, String>> readExcel(InputStream inputStream, boolean firstRowIsHeader) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+        XSSFWorkbook workbook = null;
+        OPCPackage opcPackage = null;
+        try {
+            opcPackage = OPCPackage.open(inputStream);
+            workbook = new XSSFWorkbook(opcPackage);
             int numberOfSheets = workbook.getNumberOfSheets();
             List<Map<String, String>> dataList = new ArrayList<>();
             for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
@@ -259,6 +321,8 @@ public class ExcelUtils {
             return dataList;
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
+        } finally {
+            closeResourceQuitely(inputStream, opcPackage, workbook);
         }
     }
 
@@ -267,7 +331,11 @@ public class ExcelUtils {
     }
 
     public static List<Map<String, String>> readExcel(InputStream inputStream, boolean firstRowIsHeader, String... sheetNameList) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+        XSSFWorkbook workbook = null;
+        OPCPackage opcPackage = null;
+        try {
+            opcPackage = OPCPackage.open(inputStream);
+            workbook = new XSSFWorkbook(opcPackage);
             List<Map<String, String>> dataList = new ArrayList<>();
             for (String sheetName : sheetNameList) {
                 XSSFSheet xssfSheet = workbook.getSheet(sheetName);
@@ -280,6 +348,8 @@ public class ExcelUtils {
             return dataList;
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
+        } finally {
+            closeResourceQuitely(inputStream, opcPackage, workbook);
         }
     }
 
@@ -289,7 +359,13 @@ public class ExcelUtils {
      * @return 表格数据
      */
     public static List<Map<String, String>> readExcel(File file, boolean firstRowIsHeader) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(file)) {
+        XSSFWorkbook workbook = null;
+        FileInputStream inputStream = null;
+        OPCPackage opcPackage = null;
+        try {
+            inputStream = new FileInputStream(file);
+            opcPackage = OPCPackage.open(inputStream);
+            workbook = new XSSFWorkbook(opcPackage);
             int numberOfSheets = workbook.getNumberOfSheets();
             List<Map<String, String>> dataList = new ArrayList<>();
             for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
@@ -303,6 +379,19 @@ public class ExcelUtils {
             return dataList;
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
+        } finally {
+            try {
+                if (Objects.nonNull(inputStream)) {
+                    inputStream.close();
+                }
+                if (Objects.nonNull(opcPackage)) {
+                    opcPackage.close();
+                }
+                if (Objects.nonNull(workbook)) {
+                    workbook.close();
+                }
+            } catch (Exception ignore) {
+            }
         }
     }
 
@@ -342,9 +431,9 @@ public class ExcelUtils {
             return new ArrayList<>(0);
         }
         List<Map<String, String>> dataList = new ArrayList<>(lastRowNum);
-        for (int rowIndex = 0; rowIndex < lastRowNum; rowIndex++) {
+        for (int rowIndex = 0; rowIndex <= lastRowNum; rowIndex++) {
             Row sheetRow = sheet.getRow(rowIndex);
-            Map<String, String> rowValue = readRowIndexValue(sheetRow);
+            Map<String, String> rowValue = readRowValue(sheetRow);
             dataList.add(rowValue);
         }
         return dataList;
@@ -365,8 +454,8 @@ public class ExcelUtils {
         List<Map<String, String>> dataList = new ArrayList<>(lastRowNum);
         int firstRowNum = sheet.getFirstRowNum();
         Row firstRow = sheet.getRow(firstRowNum);
-        Map<String, String> sheetHeader = readRowIndexValue(firstRow);
-        for (int rowIndex = 1; rowIndex < lastRowNum; rowIndex++) {
+        Map<Integer, String> sheetHeader = readRowIndexValue(firstRow);
+        for (int rowIndex = 1; rowIndex <= lastRowNum; rowIndex++) {
             Row sheetRow = sheet.getRow(rowIndex);
             Map<String, String> rowValue = readRowValue(sheetRow, sheetHeader);
             dataList.add(rowValue);
@@ -382,32 +471,45 @@ public class ExcelUtils {
      * @param firstRowValueMap header data
      * @return row data
      */
-    private static Map<String, String> readRowValue(Row sheetRow, Map<String, String> firstRowValueMap) {
+    protected static Map<String, String> readRowValue(Row sheetRow, Map<Integer, String> firstRowValueMap) {
         firstRowValueMap = Optional.ofNullable(firstRowValueMap).orElse(new HashMap<>(0));
         short lastCellNum = sheetRow.getLastCellNum();
         Map<String, String> rowValueMap = new HashMap<>(lastCellNum);
         for (int index = 0; index < lastCellNum; index++) {
             Cell rowCell = sheetRow.getCell(index);
-            String headerKey = firstRowValueMap.get(Objects.toString(index));
+            String headerKey = firstRowValueMap.getOrDefault(index, "null");
             rowValueMap.put(headerKey, getCellValue(rowCell));
         }
         return rowValueMap;
     }
 
-    private static Map<String, String> readRowIndexValue(Row sheetRow) {
+    protected static Map<Integer, String> readRowIndexValue(Row sheetRow) {
         if (Objects.isNull(sheetRow)) {
             return new HashMap<>(0);
         }
         short lastCellNum = sheetRow.getLastCellNum();
-        Map<String, String> headerMap = new HashMap<>(lastCellNum);
+        Map<Integer, String> headerMap = new HashMap<>(lastCellNum);
         for (int index = 0; index < lastCellNum; index++) {
             Cell rowCell = sheetRow.getCell(index);
-            headerMap.put(Objects.toString(index), getCellValue(rowCell));
+            headerMap.put(index, getCellValue(rowCell));
         }
         return headerMap;
     }
 
-    private static String getCellValue(Cell rowCell) {
+    protected static Map<String, String> readRowValue(Row sheetRow) {
+        if (Objects.isNull(sheetRow)) {
+            return new HashMap<>(0);
+        }
+        short lastCellNum = sheetRow.getLastCellNum();
+        Map<String, String> rowValueMap = new HashMap<>(lastCellNum);
+        for (int index = 0; index < lastCellNum; index++) {
+            Cell rowCell = sheetRow.getCell(index);
+            rowValueMap.put(String.valueOf(index), getCellValue(rowCell));
+        }
+        return rowValueMap;
+    }
+
+    protected static String getCellValue(Cell rowCell) {
         if (Objects.isNull(rowCell)) {
             return "";
         }
@@ -436,7 +538,7 @@ public class ExcelUtils {
         } else if (CellType.FORMULA.equals(cellType)) {
             return rowCell.getCellFormula();
         } else {
-            return rowCell.getStringCellValue().replace("\n", "").replace("\r", "");
+            return rowCell.getStringCellValue();
         }
     }
 

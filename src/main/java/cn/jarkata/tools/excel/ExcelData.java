@@ -1,10 +1,13 @@
 package cn.jarkata.tools.excel;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Getter
 public class ExcelData {
 
     private List<String> headerList;
@@ -39,10 +42,6 @@ public class ExcelData {
 
     public void setHeaderList(List<String> headerList) {
         this.headerList = headerList;
-    }
-
-    public String getSheetName() {
-        return sheetName;
     }
 
     public void setSheetName(String sheetName) {
