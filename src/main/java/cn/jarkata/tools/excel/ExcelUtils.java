@@ -1,5 +1,6 @@
 package cn.jarkata.tools.excel;
 
+import cn.jarkata.commons.utils.DateUtils;
 import cn.jarkata.commons.utils.ReflectionUtils;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
@@ -10,6 +11,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -117,6 +119,9 @@ public class ExcelUtils {
     }
 
     protected static void setObjCellValue(Row sheetRow, List<Field> fieldList, Object dataObj) {
+        if (Objects.isNull(fieldList)) {
+            return;
+        }
         int cellIndex = 0;
         for (Field field : fieldList) {
             Cell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
@@ -152,7 +157,7 @@ public class ExcelUtils {
                 }
             }
         } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
+            throw new RuntimeException(ex);
         } finally {
             closeResourceQuitely(inputStream, opcPackage, workbook);
         }
@@ -204,7 +209,7 @@ public class ExcelUtils {
                 }
             }
         } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
+            throw new RuntimeException(ex);
         } finally {
             closeResourceQuitely(inputStream, opcPackage, workbook);
         }
@@ -235,13 +240,16 @@ public class ExcelUtils {
                 }
             }
         } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
+            throw new RuntimeException(ex);
         } finally {
             closeResourceQuitely(inputStream, opcPackage, workbook);
         }
     }
 
     public static void readFromSheetWithHeader(Sheet sheet, Consumer<Map<String, String>> consumer) {
+        if (Objects.isNull(sheet)) {
+            return;
+        }
         int lastRowNum = sheet.getLastRowNum();
         if (lastRowNum < 0) {
             return;
@@ -255,11 +263,12 @@ public class ExcelUtils {
         try {
             for (int rowIndex = 1; rowIndex <= lastRowNum; rowIndex++) {
                 Row sheetRow = sheet.getRow(rowIndex);
-                Map<String, String> rowValue = readRowValue(sheetRow, sheetHeader);
+                Map<String, String> rowValue;
                 try {
+                    rowValue = readRowValue(sheetRow, sheetHeader);
                     consumer.accept(rowValue);
                 } finally {
-                    rowValue.clear();
+                    rowValue = null;
                 }
             }
         } finally {
@@ -283,11 +292,12 @@ public class ExcelUtils {
         }
         for (int rowIndex = 0; rowIndex <= lastRowNum; rowIndex++) {
             Row sheetRow = sheet.getRow(rowIndex);
-            Map<String, String> rowValue = readRowValue(sheetRow);
+            Map<String, String> rowValue;
             try {
+                rowValue = readRowValue(sheetRow);
                 consumer.accept(rowValue);
             } finally {
-                rowValue.clear();
+                rowValue = null;
             }
         }
     }
@@ -320,7 +330,7 @@ public class ExcelUtils {
             }
             return dataList;
         } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
+            throw new RuntimeException(ex);
         } finally {
             closeResourceQuitely(inputStream, opcPackage, workbook);
         }
@@ -347,7 +357,7 @@ public class ExcelUtils {
             }
             return dataList;
         } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
+            throw new RuntimeException(ex);
         } finally {
             closeResourceQuitely(inputStream, opcPackage, workbook);
         }
@@ -378,20 +388,9 @@ public class ExcelUtils {
             }
             return dataList;
         } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
+            throw new RuntimeException(ex);
         } finally {
-            try {
-                if (Objects.nonNull(inputStream)) {
-                    inputStream.close();
-                }
-                if (Objects.nonNull(opcPackage)) {
-                    opcPackage.close();
-                }
-                if (Objects.nonNull(workbook)) {
-                    workbook.close();
-                }
-            } catch (Exception ignore) {
-            }
+            closeResourceQuitely(inputStream, opcPackage, workbook);
         }
     }
 
@@ -472,6 +471,9 @@ public class ExcelUtils {
      * @return row data
      */
     protected static Map<String, String> readRowValue(Row sheetRow, Map<Integer, String> firstRowValueMap) {
+        if (Objects.isNull(sheetRow)) {
+            return new HashMap<>(0);
+        }
         firstRowValueMap = Optional.ofNullable(firstRowValueMap).orElse(new HashMap<>(0));
         short lastCellNum = sheetRow.getLastCellNum();
         Map<String, String> rowValueMap = new HashMap<>(lastCellNum);
@@ -504,7 +506,7 @@ public class ExcelUtils {
         Map<String, String> rowValueMap = new HashMap<>(lastCellNum);
         for (int index = 0; index < lastCellNum; index++) {
             Cell rowCell = sheetRow.getCell(index);
-            rowValueMap.put(String.valueOf(index), getCellValue(rowCell));
+            rowValueMap.put("" + index, getCellValue(rowCell));
         }
         return rowValueMap;
     }
@@ -523,11 +525,11 @@ public class ExcelUtils {
             short dataFormat = cellStyle.getDataFormat();
             if (isDate(dataFormat)) {
                 LocalDateTime localDateTimeCellValue = rowCell.getLocalDateTimeCellValue();
-                return localDateTimeCellValue.toString();
+                return DateUtils.formatStdIsoDateTime(localDateTimeCellValue);
             }
             if (isTime(dataFormat)) {
                 LocalDateTime localDateTimeCellValue = rowCell.getLocalDateTimeCellValue();
-                return localDateTimeCellValue.toLocalTime().toString();
+                return localDateTimeCellValue.toLocalTime().format(DateTimeFormatter.ISO_LOCAL_TIME);
             }
             if (isPercentValue(dataFormat)) {
                 DecimalFormat decimalFormat = new DecimalFormat("###.#####%");

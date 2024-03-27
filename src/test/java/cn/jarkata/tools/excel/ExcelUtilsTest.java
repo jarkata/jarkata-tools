@@ -14,12 +14,20 @@ public class ExcelUtilsTest {
     @Test
     public void readExcelCallback() {
 
-        File file = FileUtils.getFile("test.xlsx");
+        List<Map<String, String>> dataList = new ArrayList<>();
+        File file = FileUtils.getFile("./test.xlsx");
         ExcelUtils.readExcel(file, false, data -> {
             Assert.assertNotNull(data);
-            System.out.println(data);
-        });
+            dataList.add(data);
 
+        });
+        System.out.println(dataList.size());
+        for (Map<String, String> map : dataList) {
+            System.out.println(map);
+
+        }
+        Map<String, String> map = dataList.get(0);
+        Assert.assertEquals(map.get("0"), "test1");
     }
 
     @Test
@@ -60,15 +68,23 @@ public class ExcelUtilsTest {
     @Test
     public void testWriteTo() {
         ExcelData data = new ExcelData();
-        data.setHeaderList(Arrays.asList("test1", "test2"));
+        List<String> list = new ArrayList<>();
+        for (int index = 0; index < 143; index++) {
+            list.add("test_" + index);
+        }
+        data.setHeaderList(list);
         data.setSheetName("remark");
 
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put("test1", "32423");
-        Map<String, String> dataMap1 = new HashMap<>();
-        dataMap1.put("test2", "TEST");
-        data.setDataList(Arrays.asList(dataMap, dataMap, dataMap1));
-        ExcelUtils.writeTo(new File("/Users/kart/Desktop/test.xlsx"), data);
+        List<Map<String, String>> dataList = new ArrayList<>();
+        for (int idx = 0; idx < 20000; idx++) {
+            Map<String, String> dataMap = new HashMap<>();
+            for (int index = 0; index < 143; index++) {
+                dataMap.put("test_" + index, "32423");
+            }
+            dataList.add(dataMap);
+        }
+        data.setDataList(dataList);
+        ExcelUtils.writeTo(new File("./test.xlsx"), data);
 
     }
 
@@ -76,10 +92,13 @@ public class ExcelUtilsTest {
     public void writeTo() {
         ExcelData data = new ExcelData();
         data.setSheetName("remark234");
+
+
         UserVO userVO = new UserVO(1L, "test");
         UserVO userVO1 = new UserVO(2L, "test232");
         data.setIgnoreHeaders(Collections.singletonList("username"));
-        data.setData(Arrays.asList(userVO, userVO1));
+        List<UserVO> voList = Arrays.asList(userVO, userVO1);
+        data.setData(voList);
         ExcelUtils.writeTo(new File("./test342.xlsx"), data);
     }
 }
