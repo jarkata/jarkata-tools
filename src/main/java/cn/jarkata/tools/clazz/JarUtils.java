@@ -49,34 +49,16 @@ public class JarUtils {
         if (!fileName.endsWith(".jar")) {
             throw new IllegalArgumentException("JarFile is invalid,fileName=" + fileName);
         }
-        try (
-                FileInputStream fileInputStream = new FileInputStream(file);
-                JarInputStream jarInputStream = new JarInputStream(fileInputStream); JarFile jarFile = new JarFile(file)
-        ) {
+        try (FileInputStream fileInputStream = new FileInputStream(file); JarInputStream jarInputStream = new JarInputStream(fileInputStream); JarFile jarFile = new JarFile(file)) {
             JarEntry nextJarEntry;
             while (Objects.nonNull(nextJarEntry = jarInputStream.getNextJarEntry())) {
-                String absolutePath = file.getAbsolutePath();
-                absolutePath = absolutePath.substring(0, absolutePath.length() - 4);
-                //判断当前层级的文件是否为目录
-                File targetFile = new File(absolutePath, nextJarEntry.getName());
-                if (!targetFile.exists()) {
-                    boolean mkdir = true;
-                    if (nextJarEntry.isDirectory()) {
-                        //创建目录
-                        mkdir = targetFile.mkdirs();
-                    }
-                    //目录创建失败，抛出此异常
-                    if (!mkdir) {
-                        throw new IllegalArgumentException(
-                                "File mkdirs Failed,directory=" + targetFile.getAbsolutePath());
-                    }
-                }
                 boolean directory = nextJarEntry.isDirectory();
                 //如果是目录，则直接跳过，不做文件复制
                 if (directory) {
                     continue;
                 }
                 InputStream inputStream = jarFile.getInputStream(nextJarEntry);
+                File targetFile = getFile(file, nextJarEntry);
                 Path path = targetFile.toPath();
                 Files.deleteIfExists(path);
                 try (ByteArrayOutputStream fos = new ByteArrayOutputStream()) {
@@ -86,6 +68,25 @@ public class JarUtils {
             }
         }
 
+    }
+
+    private static File getFile(File file, JarEntry nextJarEntry) {
+        String absolutePath = file.getAbsolutePath();
+        absolutePath = absolutePath.substring(0, absolutePath.length() - 4);
+        //判断当前层级的文件是否为目录
+        File targetFile = new File(absolutePath, nextJarEntry.getName());
+        if (!targetFile.exists()) {
+            boolean mkdir = true;
+            if (nextJarEntry.isDirectory()) {
+                //创建目录
+                mkdir = targetFile.mkdirs();
+            }
+            //目录创建失败，抛出此异常
+            if (!mkdir) {
+                throw new IllegalArgumentException("File mkdirs Failed,directory=" + targetFile.getAbsolutePath());
+            }
+        }
+        return targetFile;
     }
 
     /**
@@ -98,9 +99,7 @@ public class JarUtils {
     public static List<Class<?>> readClasses(File... jarFile) throws IOException {
         Objects.requireNonNull(jarFile, "JarFile Is Null");
         List<Class<?>> classList = new ArrayList<>();
-        try (
-                URLClassLoader jarkataClassLoader = getClassLoader(FileUtils.toURL(jarFile))
-        ) {
+        try (URLClassLoader jarkataClassLoader = getClassLoader(FileUtils.toURL(jarFile))) {
             for (File file : jarFile) {
                 InputStream inputStream = Files.newInputStream(file.toPath());
                 JarInputStream jarInputStream = new JarInputStream(inputStream);
