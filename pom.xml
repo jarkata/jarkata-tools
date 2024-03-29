@@ -17,7 +17,13 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <poi.version>5.2.5</poi.version>
         <junit.version>4.13.2</junit.version>
-        <jarkata-commons.version>2.0.11</jarkata-commons.version>
+        <jarkata-commons.version>2.0.13</jarkata-commons.version>
+        <commons-io.version>2.15.1</commons-io.version>
+        <commons-compress.version>1.26.0</commons-compress.version>
+        <lombok.version>1.18.22</lombok.version>
+        <httpclient.version>4.5.14</httpclient.version>
+        <commons-logging.version>1.2</commons-logging.version>
+        <commons-codec.version>1.16.0</commons-codec.version>
     </properties>
 
     <dependencies>
@@ -27,26 +33,30 @@
             <version>${jarkata-commons.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.22</version>
-            <scope>provided</scope>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>commons-codec</artifactId>
+                    <groupId>commons-codec</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${commons-codec.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.26.0</version>
+            <version>${commons-compress.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.15.1</version>
+            <version>${commons-io.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -63,6 +73,19 @@
                     <groupId>commons-io</groupId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
