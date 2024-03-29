@@ -1,11 +1,14 @@
 package cn.jarkata.tools.excel;
 
 import cn.jarkata.commons.utils.DateUtils;
+import cn.jarkata.commons.utils.FileUtils;
 import cn.jarkata.commons.utils.ReflectionUtils;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -17,6 +20,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ExcelUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExcelUtils.class);
 
     /**
      * 写Excel文件至多个Sheet表格中
@@ -125,17 +130,53 @@ public class ExcelUtils {
         int cellIndex = 0;
         for (Field field : fieldList) {
             Cell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
-            String dataVal = null;
+            String dataVal;
             try {
-                field.setAccessible(true);
-                dataVal = Objects.toString(field.get(dataObj), "");
+                Object fieldValue = ReflectionUtils.getFieldValue(field, dataObj);
+                dataVal = Objects.toString(fieldValue, "");
             } catch (Exception ignored) {
+                dataVal = "unkonw";
             }
             rowCell.setCellValue(dataVal);
             cellIndex++;
         }
     }
 
+    /**
+     * 将多个Excel文件合并为一个文件
+     *
+     * @param directory   Excel文件所在目录
+     * @param outputExcel 输出文件
+     */
+    public static void combineExcel(File directory, File outputExcel) {
+        List<File> fileList = FileUtils.listFile(directory);
+        List<Map<String, String>> mapList = readExcel(fileList.toArray(new File[0]));
+        if (mapList.isEmpty()) {
+            return;
+        }
+        Map<String, String> map = mapList.get(0);
+        ExcelData excelData = new ExcelData();
+        excelData.setHeaderList(map.keySet());
+        excelData.setSheetName("data");
+        excelData.setDataList(mapList);
+        writeTo(outputExcel, excelData);
+    }
+
+    public static void combineExcel(File directory, File outputExcel, List<String> headerList) {
+        List<File> fileList = FileUtils.listFile(directory);
+        if (Objects.isNull(headerList) || headerList.isEmpty()) {
+            throw new IllegalArgumentException("Header must has value");
+        }
+        List<Map<String, String>> mapList = readExcel(fileList.toArray(new File[0]));
+        if (mapList.isEmpty()) {
+            return;
+        }
+        ExcelData excelData = new ExcelData();
+        excelData.setHeaderList(headerList);
+        excelData.setSheetName("data");
+        excelData.setDataList(mapList);
+        writeTo(outputExcel, excelData);
+    }
 
     public static void readExcel(InputStream inputStream, String[] sheetNameList, Consumer<Map<String, String>> consumer) {
         readExcel(inputStream, true, sheetNameList, consumer);
@@ -163,20 +204,6 @@ public class ExcelUtils {
         }
     }
 
-    private static void closeResourceQuitely(InputStream inputStream, OPCPackage opcPackage, XSSFWorkbook workbook) {
-        try {
-            if (Objects.nonNull(inputStream)) {
-                inputStream.close();
-            }
-            if (Objects.nonNull(opcPackage)) {
-                opcPackage.close();
-            }
-            if (Objects.nonNull(workbook)) {
-                workbook.close();
-            }
-        } catch (Exception ignore) {
-        }
-    }
 
     public static void readExcel(File[] fileList, Consumer<Map<String, String>> consumer) {
         for (File file : fileList) {
@@ -275,7 +302,6 @@ public class ExcelUtils {
             sheetHeader.clear();
         }
     }
-
 
     /**
      * 从Excel Sheet读取数据，且其Key为单元格的索引值
@@ -541,6 +567,30 @@ public class ExcelUtils {
             return rowCell.getCellFormula();
         } else {
             return rowCell.getStringCellValue();
+        }
+    }
+
+
+    /**
+     * 关闭资源
+     *
+     * @param inputStream 输入文件流
+     * @param opcPackage  excel pack对象
+     * @param workbook    workbook对象
+     */
+    private static void closeResourceQuitely(InputStream inputStream, OPCPackage opcPackage, XSSFWorkbook workbook) {
+        try {
+            if (Objects.nonNull(inputStream)) {
+                inputStream.close();
+            }
+            if (Objects.nonNull(opcPackage)) {
+                opcPackage.close();
+            }
+            if (Objects.nonNull(workbook)) {
+                workbook.close();
+            }
+        } catch (Exception exception) {
+            logger.warn("close resource exception:{}", exception.getMessage());
         }
     }
 

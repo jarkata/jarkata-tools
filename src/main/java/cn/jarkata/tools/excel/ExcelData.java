@@ -2,17 +2,14 @@ package cn.jarkata.tools.excel;
 
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Getter
 public class ExcelData {
 
-    private List<String> headerList;
+    private Collection<String> headerList;
 
-    private List<String> ignoreHeaders;
+    private Collection<String> ignoreHeaders;
 
     private String sheetName;
 
@@ -28,19 +25,19 @@ public class ExcelData {
         this.data = data;
     }
 
-    public List<String> getIgnoreHeaders() {
+    public Collection<String> getIgnoreHeaders() {
         return Optional.ofNullable(ignoreHeaders).orElse(new ArrayList<>(0));
     }
 
-    public void setIgnoreHeaders(List<String> ignoreHeaders) {
+    public void setIgnoreHeaders(Collection<String> ignoreHeaders) {
         this.ignoreHeaders = ignoreHeaders;
     }
 
-    public List<String> getHeaderList() {
+    public Collection<String> getHeaderList() {
         return Optional.ofNullable(headerList).orElse(new ArrayList<>(0));
     }
 
-    public void setHeaderList(List<String> headerList) {
+    public void setHeaderList(Collection<String> headerList) {
         this.headerList = headerList;
     }
 
