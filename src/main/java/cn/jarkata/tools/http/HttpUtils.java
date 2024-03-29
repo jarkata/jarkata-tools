@@ -18,6 +18,9 @@ import org.apache.http.util.EntityUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+/**
+ * HTTP请求工具类
+ */
 public class HttpUtils {
 
     private static final HttpClientConnectionManager clientConnectionManager = new PoolingHttpClientConnectionManager();
@@ -56,6 +59,12 @@ public class HttpUtils {
         }
     }
 
+    /**
+     * 关闭资源
+     *
+     * @param httpResponse   http响应对象
+     * @param responseEntity 响应内容
+     */
     public static void closeQuietly(CloseableHttpResponse httpResponse, HttpEntity responseEntity) {
         if (Objects.isNull(httpResponse) || Objects.isNull(responseEntity)) {
             return;
