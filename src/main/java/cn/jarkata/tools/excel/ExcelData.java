@@ -13,8 +13,6 @@ public class ExcelData {
 
     private String sheetName;
 
-    private List<Map<String, String>> dataList;
-
     private List<?> data;
 
     public List<?> getData() {
@@ -45,11 +43,4 @@ public class ExcelData {
         this.sheetName = sheetName;
     }
 
-    public List<Map<String, String>> getDataList() {
-        return Optional.ofNullable(dataList).orElse(new ArrayList<>(0));
-    }
-
-    public void setDataList(List<Map<String, String>> dataList) {
-        this.dataList = dataList;
-    }
 }

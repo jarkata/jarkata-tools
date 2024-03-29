@@ -83,7 +83,7 @@ public class ExcelUtilsTest {
             }
             dataList.add(dataMap);
         }
-        data.setDataList(dataList);
+        data.setData(dataList);
         ExcelUtils.writeTo(new File("./test.xlsx"), data);
 
     }

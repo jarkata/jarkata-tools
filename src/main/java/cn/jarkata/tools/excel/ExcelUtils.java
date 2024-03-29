@@ -1,8 +1,10 @@
 package cn.jarkata.tools.excel;
 
+import cn.jarkata.commons.Maps;
 import cn.jarkata.commons.utils.DateUtils;
 import cn.jarkata.commons.utils.FileUtils;
 import cn.jarkata.commons.utils.ReflectionUtils;
+import cn.jarkata.commons.utils.StringUtils;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -66,13 +68,18 @@ public class ExcelUtils {
      * @param workbook  工作表格
      * @param excelData 表格数据
      */
-    private static void writeSheet(Workbook workbook, ExcelData excelData) {
+    protected static void writeSheet(Workbook workbook, ExcelData excelData) {
         Objects.requireNonNull(excelData, "Excel数据对象为空");
         List<?> dataObjList = excelData.getData();
-        if (Objects.nonNull(dataObjList) && !dataObjList.isEmpty()) {
+        if (Objects.isNull(dataObjList) || dataObjList.isEmpty()) {
+            return;
+        }
+        Object object1 = dataObjList.get(0);
+        if (!(object1 instanceof Map)) {
             writeObjectSheet(workbook, excelData);
             return;
         }
+
         Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
         // 输出表格头
         Row sheetRow = xssfSheet.createRow(0);
@@ -82,14 +89,16 @@ public class ExcelUtils {
             rowCell.setCellValue(headerList.get(cellIndex));
         }
         // 输出表格数据主体
-        List<Map<String, String>> dataList = excelData.getDataList();
+        List<?> dataList = excelData.getData();
         for (int rowIndex = 0, rowCount = dataList.size(); rowIndex < rowCount; rowIndex++) {
             Row xssfRow = xssfSheet.createRow(rowIndex + 1);
-            Map<String, String> dataMap = dataList.get(rowIndex);
+            Object object = dataList.get(rowIndex);
+            Map<String, Object> dataMap1 = Maps.toMap(object);
             for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
                 Cell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
                 String headerKey = headerList.get(cellIndex);
-                rowCell.setCellValue(dataMap.getOrDefault(headerKey, ""));
+                String excelVal = StringUtils.toString(dataMap1.getOrDefault(headerKey, null));
+                rowCell.setCellValue(excelVal);
             }
         }
     }
@@ -106,7 +115,7 @@ public class ExcelUtils {
         Object fieldObj = dataList.get(0);
         Class<?> objClass = fieldObj.getClass();
 
-        List<Field> fieldList = ReflectionUtils.getFieldList(objClass).stream().filter(field -> !excelData.getIgnoreHeaders().contains(field.getName())).collect(Collectors.toList());
+        List<Field> fieldList = ReflectionUtils.getAllFieldList(objClass).stream().filter(field -> !excelData.getIgnoreHeaders().contains(field.getName())).collect(Collectors.toList());
         int firstCellIndex = 0;
         for (Field field : fieldList) {
             Cell rowCell = sheetRow.createCell(firstCellIndex, CellType.STRING);
@@ -158,7 +167,7 @@ public class ExcelUtils {
         ExcelData excelData = new ExcelData();
         excelData.setHeaderList(map.keySet());
         excelData.setSheetName("data");
-        excelData.setDataList(mapList);
+        excelData.setData(mapList);
         writeTo(outputExcel, excelData);
     }
 
@@ -174,7 +183,7 @@ public class ExcelUtils {
         ExcelData excelData = new ExcelData();
         excelData.setHeaderList(headerList);
         excelData.setSheetName("data");
-        excelData.setDataList(mapList);
+        excelData.setData(mapList);
         writeTo(outputExcel, excelData);
     }
 
@@ -291,12 +300,8 @@ public class ExcelUtils {
             for (int rowIndex = 1; rowIndex <= lastRowNum; rowIndex++) {
                 Row sheetRow = sheet.getRow(rowIndex);
                 Map<String, String> rowValue;
-                try {
-                    rowValue = readRowValue(sheetRow, sheetHeader);
-                    consumer.accept(rowValue);
-                } finally {
-                    rowValue = null;
-                }
+                rowValue = readRowValue(sheetRow, sheetHeader);
+                consumer.accept(rowValue);
             }
         } finally {
             sheetHeader.clear();
@@ -319,12 +324,8 @@ public class ExcelUtils {
         for (int rowIndex = 0; rowIndex <= lastRowNum; rowIndex++) {
             Row sheetRow = sheet.getRow(rowIndex);
             Map<String, String> rowValue;
-            try {
-                rowValue = readRowValue(sheetRow);
-                consumer.accept(rowValue);
-            } finally {
-                rowValue = null;
-            }
+            rowValue = readRowValue(sheetRow);
+            consumer.accept(rowValue);
         }
     }
 
