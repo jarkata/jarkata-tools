@@ -74,30 +74,40 @@ public class ExcelUtils {
         if (Objects.isNull(dataObjList) || dataObjList.isEmpty()) {
             return;
         }
-        Object object1 = dataObjList.get(0);
-        if (!(object1 instanceof Map)) {
+        Object object = dataObjList.get(0);
+        if (!(object instanceof Map)) {
             writeObjectSheet(workbook, excelData);
             return;
         }
 
+        Collection<String> headerList = excelData.getHeaderList();
+        if (Objects.isNull(headerList) || headerList.isEmpty()) {
+            Map<String, Object> headerMap = Maps.toMap(object);
+            excelData.setHeaderList(headerMap.keySet());
+        }
+        List<String> headerList2 = excelData.getHeaderList().stream().filter(key -> !excelData.getIgnoreHeaders().contains(key)).collect(Collectors.toList());
+        if (headerList2.isEmpty()) {
+            throw new IllegalArgumentException("当数据为类型为HashMap时,HeadersList必须自定义");
+        }
+
+        int cellCount = headerList.size();
         Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
         // 输出表格头
         Row sheetRow = xssfSheet.createRow(0);
-        List<String> headerList = excelData.getHeaderList().stream().filter(key -> !excelData.getIgnoreHeaders().contains(key)).collect(Collectors.toList());
-        for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
+        for (int cellIndex = 0; cellIndex < cellCount; cellIndex++) {
             Cell rowCell = sheetRow.createCell(cellIndex, CellType.STRING);
-            rowCell.setCellValue(headerList.get(cellIndex));
+            rowCell.setCellValue(headerList2.get(cellIndex));
         }
         // 输出表格数据主体
         List<?> dataList = excelData.getData();
         for (int rowIndex = 0, rowCount = dataList.size(); rowIndex < rowCount; rowIndex++) {
             Row xssfRow = xssfSheet.createRow(rowIndex + 1);
-            Object object = dataList.get(rowIndex);
-            Map<String, Object> dataMap1 = Maps.toMap(object);
-            for (int cellIndex = 0, cellCount = headerList.size(); cellIndex < cellCount; cellIndex++) {
+            Object rowValObj = dataList.get(rowIndex);
+            Map<String, Object> rowDataMap = Maps.toMap(rowValObj);
+            for (int cellIndex = 0; cellIndex < cellCount; cellIndex++) {
                 Cell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
-                String headerKey = headerList.get(cellIndex);
-                String excelVal = StringUtils.toString(dataMap1.getOrDefault(headerKey, null));
+                String headerKey = headerList2.get(cellIndex);
+                String excelVal = StringUtils.toString(rowDataMap.getOrDefault(headerKey, null));
                 rowCell.setCellValue(excelVal);
             }
         }
