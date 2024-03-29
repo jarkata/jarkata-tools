@@ -19,8 +19,7 @@ public class MavenUtils {
      * @throws InterruptedException
      */
 
-    public static boolean download(String groupId, String artifactId, String version) throws IOException,
-            InterruptedException {
+    public static boolean download(String groupId, String artifactId, String version) throws Exception {
         String mavenHome = System.getenv("MAVEN_HOME");
         Objects.requireNonNull(mavenHome, "MAVEN_HOME IS NULL");
         String bin = mavenHome + "/bin/mvn";

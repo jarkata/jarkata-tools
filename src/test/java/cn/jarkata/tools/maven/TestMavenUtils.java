@@ -2,12 +2,10 @@ package cn.jarkata.tools.maven;
 
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class TestMavenUtils {
 
     @Test
-    public void testMaven() throws IOException, InterruptedException {
+    public void testMaven() throws Exception {
 //        System.setProperty("MAVEN_HOME", "/Users/kart/program/apache-maven/");
 
         String mavenHome = System.getenv("MAVEN_HOME");
