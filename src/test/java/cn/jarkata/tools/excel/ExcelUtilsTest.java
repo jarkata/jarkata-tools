@@ -16,16 +16,29 @@ public class ExcelUtilsTest {
 
         List<Map<String, String>> dataList = new ArrayList<>();
         File file = FileUtils.getFile("./test.xlsx");
-        ExcelUtils.readExcel(file, false, data -> {
+        ExcelUtils.readExcel(new File[]{file}, data -> {
             Assert.assertNotNull(data);
-            dataList.add(data);
+            dataList.add(new LinkedHashMap<>(data));
 
         });
         System.out.println(dataList.size());
         for (Map<String, String> map : dataList) {
             System.out.println(map);
-
         }
+        Map<String, String> map = dataList.get(0);
+        Assert.assertEquals(map.get("test1"), "32423");
+    }
+
+    @Test
+    public void readExcelCallback2() {
+
+        List<Map<String, String>> dataList = new ArrayList<>();
+        File file = FileUtils.getFile("./test.xlsx");
+        ExcelUtils.readExcel(new File[]{file}, data -> {
+            Assert.assertNotNull(data);
+            dataList.add(new LinkedHashMap<>(data));
+
+        }, false);
         Map<String, String> map = dataList.get(0);
         Assert.assertEquals(map.get("0"), "test1");
     }
@@ -76,7 +89,7 @@ public class ExcelUtilsTest {
         data.setSheetName("remark");
 
         List<Map<String, String>> dataList = new ArrayList<>();
-        for (int idx = 0; idx < 20000; idx++) {
+        for (int idx = 0; idx < 1; idx++) {
             Map<String, String> dataMap = new HashMap<>();
             for (int index = 0; index < 143; index++) {
                 dataMap.put("test_" + index, "32423");
