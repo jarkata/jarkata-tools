@@ -304,7 +304,7 @@ public class ExcelUtils {
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int sheetIndex = 0; sheetIndex < numberOfSheets; sheetIndex++) {
                 XSSFSheet xssfSheet = workbook.getSheetAt(sheetIndex);
-                readExcelSheet(xssfSheet, consumer, autoClear, firstRowIsHeader);
+                readExcelSheet(xssfSheet, consumer, firstRowIsHeader, autoClear);
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
