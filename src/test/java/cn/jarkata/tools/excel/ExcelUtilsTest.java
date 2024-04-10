@@ -46,12 +46,36 @@ public class ExcelUtilsTest {
     @Test
     public void readExcel() {
 
-        File file = FileUtils.getFile("test.xlsx");
+        File file = FileUtils.getFile("2.xlsx");
         List<Map<String, String>> mapList = ExcelUtils.readExcel(file, false);
         System.out.println(mapList);
+        Assert.assertEquals(mapList.size(), 3);
         Assert.assertNotNull(mapList);
-        Map<String, String> dataMap = mapList.get(0);
-        Assert.assertEquals(dataMap.get("0"), "test1");
+        Map<String, String> dataMap = mapList.get(2);
+        Assert.assertEquals(dataMap.get("0"), "row3");
+    }
+
+    @Test
+    public void readExcel_Empty() {
+
+        File file = FileUtils.getFile("empty.xlsx");
+        List<Map<String, String>> mapList = ExcelUtils.readExcel(file, false);
+        System.out.println(mapList);
+        Assert.assertEquals(mapList.size(), 0);
+        Assert.assertNotNull(mapList);
+    }
+
+    @Test
+    public void readExcel_1Row() {
+
+        File file = FileUtils.getFile("1.xlsx");
+        List<Map<String, String>> mapList = ExcelUtils.readExcel(file, false);
+        System.out.println(mapList);
+        Assert.assertEquals(mapList.size(), 1);
+        Assert.assertNotNull(mapList);
+        
+        Map<String, String> map = mapList.get(0);
+        Assert.assertEquals(map.get("5"), "F1");
     }
 
     @Test

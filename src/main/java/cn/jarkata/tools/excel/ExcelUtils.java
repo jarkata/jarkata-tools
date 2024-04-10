@@ -318,7 +318,7 @@ public class ExcelUtils {
             return;
         }
         int lastRowNum = sheet.getLastRowNum();
-        if (lastRowNum < 0) {
+        if (lastRowNum <= 0) {
             return;
         }
         if (Objects.isNull(consumer)) {
@@ -326,6 +326,9 @@ public class ExcelUtils {
         }
         Row firstRow = sheet.getRow(0);
         Map<Integer, String> sheetHeader = readRowIndexValue(firstRow);
+        if (Objects.isNull(sheetHeader)) {
+            return;
+        }
         try {
             for (int rowIndex = 1; rowIndex <= lastRowNum; rowIndex++) {
                 Row sheetRow = sheet.getRow(rowIndex);
@@ -365,7 +368,9 @@ public class ExcelUtils {
         Map<String, String> rowValue = null;
         try {
             rowValue = readRowValue(sheetRow);
-            consumer.accept(rowValue);
+            if (Objects.nonNull(rowValue)) {
+                consumer.accept(rowValue);
+            }
         } finally {
             if (Objects.nonNull(rowValue) && autoClear) {
                 rowValue.clear();
@@ -385,7 +390,9 @@ public class ExcelUtils {
         Map<String, String> rowValue = null;
         try {
             rowValue = readRowValue(sheetRow, sheetHeader);
-            consumer.accept(rowValue);
+            if (Objects.nonNull(rowValue)) {
+                consumer.accept(rowValue);
+            }
         } finally {
             if (Objects.nonNull(rowValue) && autoClear) {
                 rowValue.clear();
@@ -491,11 +498,13 @@ public class ExcelUtils {
      * @return row data
      */
     protected static Map<String, String> readRowValue(Row sheetRow, Map<Integer, String> firstRowValueMap) {
-        if (Objects.isNull(sheetRow)) {
-            return new HashMap<>(0);
+        if (Objects.isNull(sheetRow) || Objects.isNull(firstRowValueMap)) {
+            return null;
         }
-        firstRowValueMap = Optional.ofNullable(firstRowValueMap).orElse(new LinkedHashMap<>(0));
         short lastCellNum = sheetRow.getLastCellNum();
+        if (lastCellNum <= 0) {
+            return null;
+        }
         Map<String, String> rowValueMap = new LinkedHashMap<>(lastCellNum);
         for (int index = 0; index < lastCellNum; index++) {
             Cell rowCell = sheetRow.getCell(index);
@@ -507,9 +516,12 @@ public class ExcelUtils {
 
     protected static Map<Integer, String> readRowIndexValue(Row sheetRow) {
         if (Objects.isNull(sheetRow)) {
-            return new HashMap<>(0);
+            return null;
         }
         short lastCellNum = sheetRow.getLastCellNum();
+        if (lastCellNum <= 0) {
+            return null;
+        }
         Map<Integer, String> headerMap = new LinkedHashMap<>(lastCellNum);
         for (int index = 0; index < lastCellNum; index++) {
             Cell rowCell = sheetRow.getCell(index);
@@ -520,10 +532,13 @@ public class ExcelUtils {
 
     protected static Map<String, String> readRowValue(Row sheetRow) {
         if (Objects.isNull(sheetRow)) {
-            return new HashMap<>(0);
+            return null;
         }
         short lastCellNum = sheetRow.getLastCellNum();
-        Map<String, String> rowValueMap = new HashMap<>(lastCellNum);
+        if (lastCellNum <= 0) {
+            return null;
+        }
+        Map<String, String> rowValueMap = new LinkedHashMap<>(lastCellNum);
         for (int index = 0; index < lastCellNum; index++) {
             Cell rowCell = sheetRow.getCell(index);
             rowValueMap.put("" + index, getCellValue(rowCell));
