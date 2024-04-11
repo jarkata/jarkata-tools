@@ -2,7 +2,9 @@ package cn.jarkata.tools.excel;
 
 import lombok.Getter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Optional;
 
 @Getter
 public class ExcelData {
@@ -11,15 +13,15 @@ public class ExcelData {
 
     private Collection<String> ignoreHeaders;
 
-    private String sheetName;
+    private String sheetName = "default";
 
-    private List<?> data;
+    private Collection<?> data;
 
-    public List<?> getData() {
+    public Collection<?> getData() {
         return Optional.ofNullable(data).orElse(new ArrayList<>(0));
     }
 
-    public void setData(List<?> data) {
+    public void setData(Collection<?> data) {
         this.data = data;
     }
 

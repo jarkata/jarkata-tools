@@ -70,11 +70,12 @@ public class ExcelUtils {
      */
     protected static void writeSheet(Workbook workbook, ExcelData excelData) {
         Objects.requireNonNull(excelData, "Excel数据对象为空");
-        List<?> dataObjList = excelData.getData();
-        if (Objects.isNull(dataObjList) || dataObjList.isEmpty()) {
+        Collection<?> dataList = excelData.getData();
+        if (Objects.isNull(dataList) || dataList.isEmpty()) {
             return;
         }
-        Object object = dataObjList.get(0);
+        Object[] objects = dataList.toArray();
+        Object object = objects[0];
         if (!(object instanceof Map)) {
             writeObjectSheet(workbook, excelData);
             return;
@@ -92,7 +93,7 @@ public class ExcelUtils {
             throw new IllegalArgumentException("当数据为类型为HashMap时,HeadersList必须自定义");
         }
 
-        int cellCount = headerList.size();
+        int cellCount = headerList2.size();
         Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
         // 输出表格头
         Row sheetRow = xssfSheet.createRow(0);
@@ -101,10 +102,9 @@ public class ExcelUtils {
             rowCell.setCellValue(headerList2.get(cellIndex));
         }
         // 输出表格数据主体
-        List<?> dataList = excelData.getData();
-        for (int rowIndex = 0, rowCount = dataList.size(); rowIndex < rowCount; rowIndex++) {
+        for (int rowIndex = 0, rowCount = objects.length; rowIndex < rowCount; rowIndex++) {
             Row xssfRow = xssfSheet.createRow(rowIndex + 1);
-            Object rowValObj = dataList.get(rowIndex);
+            Object rowValObj = objects[rowIndex];
             Map<String, Object> rowDataMap = Maps.toMap(rowValObj);
             for (int cellIndex = 0; cellIndex < cellCount; cellIndex++) {
                 Cell rowCell = xssfRow.createCell(cellIndex, CellType.STRING);
@@ -119,12 +119,13 @@ public class ExcelUtils {
         Sheet xssfSheet = workbook.createSheet(excelData.getSheetName());
         // 输出表格头
         Row sheetRow = xssfSheet.createRow(0);
-
-        List<?> dataList = Optional.ofNullable(excelData.getData()).orElse(new ArrayList<>(0));
-        if (dataList.isEmpty()) {
+        Collection<?> dataList = excelData.getData();
+        if (Objects.isNull(dataList) || dataList.isEmpty()) {
             return;
         }
-        Object fieldObj = dataList.get(0);
+        Object[] objects = dataList.toArray();
+
+        Object fieldObj = objects[0];
         Class<?> objClass = fieldObj.getClass();
 
         List<Field> fieldList = ReflectionUtils.getAllFieldList(objClass).stream()
